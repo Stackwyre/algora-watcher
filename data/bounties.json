@@ -1,1 +1,102 @@
-[]
+[
+  {
+    "id": "NMPcPZq9qx1D84to",
+    "amount_usd": 100,
+    "org": "ايهم ياسر سعد الدين محروس",
+    "org_handle": "a25955813-cloud",
+    "task_url": "https://github.com/tscircuit/schematic-trace-solver/issues/34",
+    "task_title": "Merge same-net trace lines that are close together (make at the same Y or same X)",
+    "created_at": "2026-04-14T13:31:39.961990Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "hpi8v9wNkJUKPDVf",
+    "amount_usd": 1,
+    "org": "Stefan",
+    "org_handle": "rigourus-stefan",
+    "task_url": "https://github.com/tuist/tuist/issues/6456",
+    "task_title": "Generate Objective C resources for internal targets",
+    "created_at": "2026-04-10T23:11:34.545875Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "bvSyMk8adkZuXSaY",
+    "amount_usd": 100,
+    "org": "Archestra",
+    "org_handle": "archestra-ai",
+    "task_url": "https://github.com/archestra-ai/archestra/issues/3689",
+    "task_title": "feat: add Google Drive knowledge connector",
+    "created_at": "2026-04-10T02:08:38.562059Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "7ozKkXHFfRZrzwFc",
+    "amount_usd": 10,
+    "org": "JuliaEarth",
+    "org_handle": "JuliaEarth",
+    "task_url": "https://github.com/JuliaEarth/GeoArtifacts.jl/issues/40",
+    "task_title": "Increase test coverage",
+    "created_at": "2026-04-09T01:15:21.675879Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "FXSsqVrcGVMwamW8",
+    "amount_usd": 150,
+    "org": "Archestra",
+    "org_handle": "archestra-ai",
+    "task_url": "https://github.com/archestra-ai/archestra/issues/3629",
+    "task_title": "feat: add Microsoft SharePoint knowledge connector",
+    "created_at": "2026-04-04T20:38:49.824203Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "2Y8NGpqeuvKget96",
+    "amount_usd": 100,
+    "org": "chandan prajapati",
+    "org_handle": "chandan944",
+    "task_url": "https://github.com/screenpipe/screenpipe/issues/1626",
+    "task_title": "fix audio device randomly stopping sometimes",
+    "created_at": "2026-04-03T08:15:04.845868Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "QuGRtXApBTCTirV1",
+    "amount_usd": 10,
+    "org": "João Bondim",
+    "org_handle": "JesterIruka",
+    "task_url": "https://github.com/coollabsio/coolify/issues/9401",
+    "task_title": "[Bug]: Unable to create redis instance after severe crash.",
+    "created_at": "2026-04-02T22:23:07.574653Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "2dbigGtSA8htrEBQ",
+    "amount_usd": 500,
+    "org": "Abrailab",
+    "org_handle": "CelebrityPunks",
+    "task_url": "https://github.com/zio/zio/issues/9878",
+    "task_title": "ZScheduler parks+unparks workers too frequently",
+    "created_at": "2026-03-30T03:16:54.728083Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "QjwTUeVLZ9ePb88v",
+    "amount_usd": 250,
+    "org": "Manish Kumar Panday",
+    "org_handle": "manishcs076-gmail-com",
+    "task_url": "https://github.com/rohitdash08/FinMind/issues/133",
+    "task_title": "Goal-based savings tracking & milestones",
+    "created_at": "2026-03-27T18:51:44.360650Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  },
+  {
+    "id": "ybV4itMyQ98SMCY2",
+    "amount_usd": 900,
+    "org": "Priyanshu Yadav",
+    "org_handle": "Priyanshu1999",
+    "task_url": "https://github.com/archestra-ai/archestra/issues/1301",
+    "task_title": "Support MCP Apps",
+    "created_at": "2026-03-27T17:35:30.661710Z",
+    "fetched_at": "2026-04-14T23:20:32.238Z"
+  }
+]
