@@ -2,7 +2,7 @@ name: Algora Bounty Watch
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # 09:00 JST
+    - cron: "0 */3 * * *"  # 3時間ごと (0,3,6,9,12,15,18,21 UTC)
   workflow_dispatch:
     inputs:
       memo:
