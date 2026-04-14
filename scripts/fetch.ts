@@ -5,16 +5,39 @@ const ENDPOINT =
   "https://console.algora.io/api/trpc/bounty.list?input=" +
   encodeURIComponent(JSON.stringify({ limit: 100, status: "open" }));
 
+type Tier = "official" | "third_party_org" | "individual" | "unknown";
+
 type Bounty = {
   id: string;
   amount_usd: number;
   org: string;
   org_handle: string;
+  org_github_handle: string | null;
+  org_member_count: number;
   task_url: string | null;
   task_title: string | null;
+  task_repo_owner: string | null;
+  tier: Tier;
   created_at: string | null;
   fetched_at: string;
 };
+
+function extractRepoOwner(url: string | null): string | null {
+  if (!url) return null;
+  const m = url.match(/github\.com\/([^/]+)\//i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+function classify(
+  repoOwner: string | null,
+  ghHandle: string | null,
+  memberCount: number,
+): Tier {
+  if (!repoOwner || !ghHandle) return "unknown";
+  if (repoOwner === ghHandle.toLowerCase()) return "official";
+  if (memberCount > 0) return "third_party_org";
+  return "individual";
+}
 
 async function main() {
   const res = await fetch(ENDPOINT, {
@@ -25,16 +48,26 @@ async function main() {
   const items = raw?.[0]?.result?.data?.json?.items ?? [];
 
   const now = new Date().toISOString();
-  const bounties: Bounty[] = items.map((b: any) => ({
-    id: b.id,
-    amount_usd: (b.reward?.amount ?? 0) / 100,
-    org: b.org?.display_name ?? b.org?.handle ?? "?",
-    org_handle: b.org?.handle ?? "?",
-    task_url: b.task?.url ?? null,
-    task_title: b.task?.title ?? null,
-    created_at: b.created_at ?? null,
-    fetched_at: now,
-  }));
+  const bounties: Bounty[] = items.map((b: any) => {
+    const task_url = b.task?.url ?? null;
+    const repo_owner = extractRepoOwner(task_url);
+    const gh_handle = b.org?.github_handle ?? null;
+    const members = Array.isArray(b.org?.members) ? b.org.members.length : 0;
+    return {
+      id: b.id,
+      amount_usd: (b.reward?.amount ?? 0) / 100,
+      org: b.org?.display_name ?? b.org?.handle ?? "?",
+      org_handle: b.org?.handle ?? "?",
+      org_github_handle: gh_handle,
+      org_member_count: members,
+      task_url,
+      task_title: b.task?.title ?? null,
+      task_repo_owner: repo_owner,
+      tier: classify(repo_owner, gh_handle, members),
+      created_at: b.created_at ?? null,
+      fetched_at: now,
+    };
+  });
 
   const outPath = resolve("data/bounties.json");
   const prev: Bounty[] = existsSync(outPath)

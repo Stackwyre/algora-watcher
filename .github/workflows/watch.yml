@@ -50,8 +50,13 @@ jobs:
             exit 0
           fi
           body=$(jq -r '
-            "## New bounties (" + (now | strftime("%Y-%m-%d")) + ")\n\n" +
-            ([.[] | "- **$" + (.amount_usd|tostring) + "** [" + .org + "] " +
+            def tier_badge:
+              if . == "official" then "✅"
+              elif . == "third_party_org" then "🏢"
+              elif . == "individual" then "👤"
+              else "⚠️" end;
+            "## New bounties (" + (now | strftime("%Y-%m-%d")) + ")\n\nLegend: ✅ official (repo owner posted) / 🏢 third-party org / 👤 individual / ⚠️ 要確認\n\n" +
+            ([.[] | "- " + (.tier|tier_badge) + " **$" + (.amount_usd|tostring) + "** [" + .org + "] " +
               (if .task_title then .task_title else "(no title)" end) +
               (if .task_url then " — " + .task_url else "" end)
              ] | join("\n"))
