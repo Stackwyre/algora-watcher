@@ -18,79 +18,125 @@ type Bounty = {
   task_title: string | null;
   task_repo_owner: string | null;
   tier: Tier;
-  created_at: string | null;
+  created_at: string;
   fetched_at: string;
 };
 
-function extractRepoOwner(url: string | null): string | null {
-  if (!url) return null;
-  const m = url.match(/github\.com\/([^/]+)\//i);
-  return m ? m[1].toLowerCase() : null;
-}
+type AlgoraResponse = {
+  result: {
+    data: {
+      bounties: Array<{
+        id: string;
+        amountInUSD: number;
+        org: {
+          name: string;
+          handle: string;
+          githubHandle: string | null;
+          memberCount: number;
+        };
+        task: {
+          url: string | null;
+          title: string | null;
+          repoOwner: string | null;
+        } | null;
+        createdAt: string;
+      }>;
+    };
+  };
+};
 
-function classify(
-  repoOwner: string | null,
-  ghHandle: string | null,
-  memberCount: number,
-): Tier {
-  if (!repoOwner || !ghHandle) return "unknown";
-  if (repoOwner === ghHandle.toLowerCase()) return "official";
-  if (memberCount > 0) return "third_party_org";
+function determineTier(bounty: any): Tier {
+  const orgHandle = bounty.org.handle?.toLowerCase();
+  const githubHandle = bounty.org.githubHandle?.toLowerCase();
+  const repoOwner = bounty.task?.repoOwner?.toLowerCase();
+  
+  if (!orgHandle || !repoOwner) {
+    return "unknown";
+  }
+  
+  // Official: org handle matches repo owner
+  if (orgHandle === repoOwner || githubHandle === repoOwner) {
+    return "official";
+  }
+  
+  // Third party org: has multiple members
+  if (bounty.org.memberCount > 1) {
+    return "third_party_org";
+  }
+  
+  // Individual: single member
   return "individual";
 }
 
-async function main() {
-  const res = await fetch(ENDPOINT, {
-    headers: { "user-agent": "algora-watcher (+https://github.com/yasumorishima/algora-watcher)" },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const raw = (await res.json()) as any;
-  const items = raw?.[0]?.result?.data?.json?.items ?? [];
-
-  const now = new Date().toISOString();
-  const bounties: Bounty[] = items.map((b: any) => {
-    const task_url = b.task?.url ?? null;
-    const repo_owner = extractRepoOwner(task_url);
-    const gh_handle = b.org?.github_handle ?? null;
-    const members = Array.isArray(b.org?.members) ? b.org.members.length : 0;
-    return {
-      id: b.id,
-      amount_usd: (b.reward?.amount ?? 0) / 100,
-      org: b.org?.display_name ?? b.org?.handle ?? "?",
-      org_handle: b.org?.handle ?? "?",
-      org_github_handle: gh_handle,
-      org_member_count: members,
-      task_url,
-      task_title: b.task?.title ?? null,
-      task_repo_owner: repo_owner,
-      tier: classify(repo_owner, gh_handle, members),
-      created_at: b.created_at ?? null,
-      fetched_at: now,
-    };
-  });
-
-  const outPath = resolve("data/bounties.json");
-  const prev: Bounty[] = existsSync(outPath)
-    ? JSON.parse(readFileSync(outPath, "utf-8"))
-    : [];
-  const prevIds = new Set(prev.map((b) => b.id));
-  const newOnes = bounties.filter((b) => !prevIds.has(b.id));
-
-  const merged = [
-    ...bounties,
-    ...prev.filter((b) => !bounties.some((c) => c.id === b.id)),
-  ].sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
-
-  writeFileSync(outPath, JSON.stringify(merged, null, 2) + "\n");
-  writeFileSync(
-    resolve("data/new-bounties.json"),
-    JSON.stringify(newOnes, null, 2) + "\n",
-  );
-
-  console.log(`fetched=${bounties.length} new=${newOnes.length} total=${merged.length}`);
+async function fetchBounties(): Promise<Bounty[]> {
+  const response = await fetch(ENDPOINT);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  const data: AlgoraResponse = await response.json();
+  const fetchedAt = new Date().toISOString();
+  
+  return data.result.data.bounties.map((bounty) => ({
+    id: bounty.id,
+    amount_usd: bounty.amountInUSD,
+    org: bounty.org.name,
+    org_handle: bounty.org.handle,
+    org_github_handle: bounty.org.githubHandle,
+    org_member_count: bounty.org.memberCount,
+    task_url: bounty.task?.url || null,
+    task_title: bounty.task?.title || null,
+    task_repo_owner: bounty.task?.repoOwner || null,
+    tier: determineTier(bounty),
+    created_at: bounty.createdAt,
+    fetched_at: fetchedAt,
+  }));
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+function loadExistingBounties(): Bounty[] {
+  const path = resolve("data/bounties.json");
+  if (!existsSync(path)) {
+    return [];
+  }
+  
+  const content = readFileSync(path, "utf-8");
+  return JSON.parse(content);
+}
+
+function findNewBounties(existing: Bounty[], current: Bounty[]): Bounty[] {
+  const existingIds = new Set(existing.map(b => b.id));
+  return current.filter(bounty => !existingIds.has(bounty.id));
+}
+
+async function main() {
+  try {
+    console.log("Fetching bounties from Algora...");
+    const currentBounties = await fetchBounties();
+    console.log(`Fetched ${currentBounties.length} bounties`);
+    
+    const existingBounties = loadExistingBounties();
+    console.log(`Loaded ${existingBounties.length} existing bounties`);
+    
+    const newBounties = findNewBounties(existingBounties, currentBounties);
+    console.log(`Found ${newBounties.length} new bounties`);
+    
+    // Save current bounties
+    writeFileSync(
+      resolve("data/bounties.json"),
+      JSON.stringify(currentBounties, null, 2)
+    );
+    
+    // Save new bounties for workflow to process
+    writeFileSync(
+      resolve("data/new-bounties.json"),
+      JSON.stringify(newBounties, null, 2)
+    );
+    
+    console.log("Done!");
+  } catch (error) {
+    console.error("Error:", error);
+    process.exit(1);
+  }
+}
+
+main();
