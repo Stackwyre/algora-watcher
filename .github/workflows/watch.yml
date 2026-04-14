@@ -1,0 +1,59 @@
+name: Algora Bounty Watch
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # 09:00 JST
+  workflow_dispatch:
+    inputs:
+      memo:
+        description: "Run memo"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: npm install
+
+      - name: Fetch bounties
+        run: npm run fetch
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet data/bounties.json; then
+            git add data/bounties.json
+            git commit -m "chore: update bounty snapshot ($(date -u +%Y-%m-%d))"
+            git push
+          else
+            echo "no changes"
+          fi
+
+      - name: Post new bounties to tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(jq 'length' data/new-bounties.json)
+          if [ "$count" -eq 0 ]; then
+            echo "no new bounties"
+            exit 0
+          fi
+          body=$(jq -r '
+            "## New bounties (" + (now | strftime("%Y-%m-%d")) + ")\n\n" +
+            ([.[] | "- **$" + (.amount_usd|tostring) + "** [" + .org + "] " +
+              (if .task_title then .task_title else "(no title)" end) +
+              (if .task_url then " — " + .task_url else "" end)
+             ] | join("\n"))
+          ' data/new-bounties.json)
+          gh issue comment 1 --repo "$GITHUB_REPOSITORY" --body "$body"
